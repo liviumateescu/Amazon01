@@ -17,6 +17,9 @@ namespace Cheop
 
         static void Main(string[] args)
         {
+            //
+            // >>>>>>>>>>>>>>>>>>>>>>>>>> CITESTE DIN FISIER <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+            //
             try
             {
                 _drumuriInitiale = GetInitialRoads();
@@ -34,36 +37,64 @@ namespace Cheop
                 Console.WriteLine($"Exception occured:\n{e.Message}");
             }
 
+            //
+            // >>>>>>>>>>>>>>>>>>>>>>>>>> INAINTE DE EXPLOZIE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+            //
             int[,] adjMatrix = new int[nrOrase, nrOrase];
-
             foreach (drum d in _drumuriInitiale)
             {
                 adjMatrix[d.oras1 - 1, d.oras2 - 1] = 1;
                 adjMatrix[d.oras2 - 1, d.oras1 - 1] = 1;
             }
-            
+            PrintMatrix(adjMatrix);
+
+            Graph<string> PlanetaInitiala = new Graph<string>();
+            //adauga planetele in obiectul Graph
+            for (int i = 0; i < nrOrase; i++)
+            {
+                PlanetaInitiala.AddNode((i + 1).ToString());
+            }
+            //adauga drumurile in obiectul Graph
+            foreach (drum d in _drumuriInitiale)
+            {
+                GraphNode<string> from = (GraphNode<string>)PlanetaInitiala.Nodes.FindByValue(d.oras1.ToString());
+                GraphNode<string> to = (GraphNode<string>)PlanetaInitiala.Nodes.FindByValue(d.oras2.ToString());
+                PlanetaInitiala.AddUndirectedEdge(from, to);
+            }
+
+            //
+            // >>>>>>>>>>>>>>>>>>>>>>>>>> DUPA EXPLOZIE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            //
+            // Creaza noaua matrice de drumuri dupa explozie
+            int[,] NewAdjMatrix = new int[nrOrase, nrOrase];
             for (int i = 0; i < nrOrase; i++)
             {
                 for (int j = 0; j < nrOrase; j++)
                 {
-                    Console.Write("{0} ", adjMatrix[i, j]);
+                    if ((adjMatrix[i, j] == 0) & (i != j))
+                    {
+                        NewAdjMatrix[i, j] = 1;
+                    }
                 }
-                Console.WriteLine();
             }
+            Console.WriteLine("++++++++++++++++++++++++++++++++++++");
+            PrintMatrix(NewAdjMatrix);
 
-            Graph<string> planeta = new Graph<string>();
-            //adauga planetele
-            for (int i = 0; i < nrOrase; i++)
+            //Adauga orasele initiale
+            Graph<string> PlanetaDupaExplozie = new Graph<string>();
+            for (int i = 0; i < PlanetaInitiala.Count; i++)
             {
-                planeta.AddNode((i+1).ToString());
+                PlanetaDupaExplozie.AddNode((i + 1).ToString());
             }
-            //adauga drumurile
-            foreach (drum d in _drumuriInitiale)
-            {
-                GraphNode<string> from = (GraphNode<string>)planeta.Nodes.FindByValue(d.oras1.ToString());
-                GraphNode<string> to = (GraphNode<string>)planeta.Nodes.FindByValue(d.oras2.ToString());
-                planeta.AddUndirectedEdge(from, to);
-            }
+            //Adauga drumurile dupa explozie
+            Console.WriteLine("Dupa explozie au fost adaugate {0} drumuri.", GraphFromMatrix(out PlanetaDupaExplozie, NewAdjMatrix));
+            Console.WriteLine("Inaine de explozie au fost {0} drumuri.", PlanetaInitiala.EdgeCount);
+            Console.WriteLine("Dupa explozie sunt {0} drumuri.", PlanetaDupaExplozie.EdgeCount);
+            Console.WriteLine("Numar corect de drumuri? -> {0}", (PlanetaInitiala.EdgeCount + PlanetaDupaExplozie.EdgeCount) == (nrOrase * (nrOrase - 1) / 2));
+
+            //
+            // >>>>>>>>>>>>>>>>>>>>>>>>>> DUPA EXPLOZIE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            //
 
             Console.ReadKey();
         }
@@ -99,5 +130,63 @@ namespace Cheop
             return drumuri;
         }
 
+        public static int GraphFromMatrix(out Graph<string> graph, int[,] aM)
+        {
+            int NrOfRoads = 0;
+            graph = new Graph<string>();
+            for (int i = 0; i < aM.GetLength(0); i++)
+            {
+                graph.AddNode((i + 1).ToString());
+            }
+
+            foreach (GraphNode<string> nod in graph.Nodes)
+            {
+                int i = nod.NodeNumber - 1;
+                for (int j = nod.NodeNumber - 1; j < aM.GetLength(0); j++)
+                {
+                    if (aM[i, j] == 1)
+                    {
+                        GraphNode<string> from = (GraphNode<string>)graph.Nodes.FindByValue((i + 1).ToString());
+                        GraphNode<string> to = (GraphNode<string>)graph.Nodes.FindByValue((j + 1).ToString());
+                        graph.AddUndirectedEdge(from, to);
+                        NrOfRoads++;
+                    }
+                }
+
+            }
+            return NrOfRoads;
+        }
+
+        public static int MatrixFromGraph(out int[,] aM, Graph<string> graph)
+        {
+            int NrOfRoads = 0;
+            aM = new int[graph.Count, graph.Count];
+            foreach (GraphNode<string> nod in graph.Nodes)
+            {
+                foreach (Node<string> neighbour in nod.Neighbors)
+                {
+                    aM[nod.NodeNumber, neighbour.NodeNumber] = 1;
+                    NrOfRoads++;
+                }
+            }
+            return NrOfRoads / 2;
+        }
+
+        public static void PrintMatrix(int[,] m)
+        {
+            for (int i = 0; i < m.GetLength(0); i++)
+            {
+                for (int j = 0; j < m.GetLength(1); j++)
+                {
+                    Console.Write("{0} ", m[i, j]);
+                }
+                Console.WriteLine();
+            }
+        }
+
+        public static void Teleportare (int oras1, int oras2)
+        {
+            
+        }
     }
 }

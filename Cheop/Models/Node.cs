@@ -9,6 +9,8 @@ namespace Cheop.Models
         private T data;
         private NodeList<T> neighbors = null;
 
+        public int NodeNumber => Int32.Parse(data.ToString());
+
         public Node() { }
         public Node(T data) : this(data, null) { }
         public Node(T data, NodeList<T> neighbors)

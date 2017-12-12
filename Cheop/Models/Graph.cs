@@ -18,6 +18,8 @@ namespace Cheop.Models
         }
 
         private NodeList<T> nodeSet;  // ??????????????????????????????????????
+        private NodeList<T> nodesPosition;
+        private int edgeCount = 0;
 
         public Graph() : this(null) { }
         public Graph(NodeList<T> nodeSet)
@@ -55,6 +57,7 @@ namespace Cheop.Models
         public void AddUndirectedEdge(GraphNode<T> from, GraphNode<T> to)
         {
             AddUndirectedEdge(from, to, 0);
+            edgeCount++;
         }
 
         public bool Contains(T value)
@@ -90,9 +93,26 @@ namespace Cheop.Models
             }
         }
 
+        public NodeList<T> NodesPosition
+        {
+            get
+            {
+                return nodesPosition;
+            }
+        }
+
         public int Count
         {
             get { return nodeSet.Count; }
         }
+
+        public int EdgeCount => edgeCount;
+        
+        public bool Teleport(T oras1, T oras2)
+        {
+
+            return true;
+        }
+
     }
 }

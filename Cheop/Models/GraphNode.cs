@@ -4,13 +4,16 @@ using System.Text;
 
 namespace Cheop.Models
 {
-    public class GraphNode<T>:Node<T>
+    public class GraphNode<T> : Node<T>
     {
         private List<int> costs;
 
         public GraphNode() : base() { }
-        public GraphNode(T value): base(value) { }
-        public GraphNode(T value, NodeList<T> neighbors):base(value, neighbors) { }
+        public GraphNode(T value) : base(value) { }
+        public GraphNode(T value, NodeList<T> neighbors) : base(value, neighbors) { }
+
+        public int NumberOfNeighbors => Neighbors.Count;
+
 
         new public NodeList<T> Neighbors
         {
