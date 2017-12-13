@@ -14,6 +14,7 @@ namespace Cheop
         private static List<drum> _drumuriInitiale { get; set; }
         public static int nrOrase;
         public static int nrDrumuri;
+        public static Dictionary<int, GraphNode<string>> Topologie;
 
         static void Main(string[] args)
         {
@@ -41,6 +42,7 @@ namespace Cheop
             // >>>>>>>>>>>>>>>>>>>>>>>>>> INAINTE DE EXPLOZIE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
             //
             int[,] adjMatrix = new int[nrOrase, nrOrase];
+            Topologie = new Dictionary<int, GraphNode<string>>();
             foreach (drum d in _drumuriInitiale)
             {
                 adjMatrix[d.oras1 - 1, d.oras2 - 1] = 1;
@@ -53,6 +55,7 @@ namespace Cheop
             for (int i = 0; i < nrOrase; i++)
             {
                 PlanetaInitiala.AddNode((i + 1).ToString());
+                //Topologie.Add(i+1,);
             }
             //adauga drumurile in obiectul Graph
             foreach (drum d in _drumuriInitiale)
@@ -61,6 +64,7 @@ namespace Cheop
                 GraphNode<string> to = (GraphNode<string>)PlanetaInitiala.Nodes.FindByValue(d.oras2.ToString());
                 PlanetaInitiala.AddUndirectedEdge(from, to);
             }
+
 
             //
             // >>>>>>>>>>>>>>>>>>>>>>>>>> DUPA EXPLOZIE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -91,17 +95,78 @@ namespace Cheop
             Console.WriteLine("Inaine de explozie au fost {0} drumuri.", PlanetaInitiala.EdgeCount);
             Console.WriteLine("Dupa explozie sunt {0} drumuri.", PlanetaDupaExplozie.EdgeCount);
             Console.WriteLine("Numar corect de drumuri? -> {0}", (PlanetaInitiala.EdgeCount + PlanetaDupaExplozie.EdgeCount) == (nrOrase * (nrOrase - 1) / 2));
+            bool AddNewRoads = !(PlanetaInitiala.EdgeCount == PlanetaDupaExplozie.EdgeCount);
+            Console.WriteLine("Mai este nevoie de noi drumuri? -> {0}", AddNewRoads);
+            //
+            // >>>>>>>>>>>>>>>>>>>>>>>>>> ADAUGARE DRUMURI NOI <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            //
+            bool SOLUTIE = false;
+            while (!SOLUTIE)
+            {
+                int NrDrumuriTotal = nrOrase * (nrOrase - 1) / 2;
+                int NrDrumuriInitiale = PlanetaInitiala.EdgeCount;
+                int NrDrumuriFinale = PlanetaDupaExplozie.EdgeCount;
+                bool AdaugDrumuriInitiale = NrDrumuriInitiale < NrDrumuriFinale;
+                bool AdaugOrase = NrDrumuriInitiale > NrDrumuriFinale;
+
+                if (NrDrumuriInitiale == NrDrumuriFinale) // conditia 1 indeplinita (acelasi nr de drumuri)
+                {
+                    bool PoateFiSolutie = PoateFiSol(PlanetaInitiala, PlanetaDupaExplozie);
+                    Console.WriteLine("Poate fi solutie? -> {0}", PoateFiSolutie);
+                    if (PoateFiSolutie) //conditia 2 indeplinita (orase cu numar identic de drumuri)
+                    {
+                        SOLUTIE = Algoritm();
+                    } 
+                }//else - genereaza alt graf
+                else
+                {
+                    ModificaUnDrumDinCeleAdaugate;
+                }
+            }
+
+
+
 
             //
-            // >>>>>>>>>>>>>>>>>>>>>>>>>> DUPA EXPLOZIE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            // >>>>>>>>>>>>>>>>>>>>>>>>>> PARCURGERE GRAPH <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             //
+            Dictionary<GraphNode<string>, bool> visited = new Dictionary<GraphNode<string>, bool>();
+            Queue<GraphNode<string>> worklist = new Queue<GraphNode<string>>();
+
+            foreach (GraphNode<string> nod in PlanetaInitiala.Nodes) // doar pentru a sari la grafuri partiale
+            {
+                if (!visited.ContainsKey(nod)) //daca nu e vizitat incepe sa vizitezi altele din el
+                {
+                    worklist.Enqueue(nod);
+                    while (worklist.Count != 0)
+                    {
+                        GraphNode<string> node = worklist.Dequeue();
+                        visited[node] = true;
+                        foreach (GraphNode<string> neighbor in node.Neighbors)
+                        {
+                            if (!visited.ContainsKey(neighbor))
+                            {
+                                visited.Add(neighbor, false);
+                                worklist.Enqueue(neighbor);
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            foreach (KeyValuePair<GraphNode<string>, bool> entry in visited)
+            {
+                Console.WriteLine("{0} -> {1}", entry.Key.Value, entry.Value);
+            }
+
 
             Console.ReadKey();
         }
 
         public static List<drum> GetInitialRoads()
         {
-            int[][] listaFisier = File.ReadAllLines("input.txt")
+            int[][] listaFisier = File.ReadAllLines("../Cheop/InputFiles/input.txt")
                     .Select(l => l.Split(' ').Select(i => int.Parse(i)).ToArray())
                     .ToArray();
 
@@ -184,9 +249,28 @@ namespace Cheop
             }
         }
 
-        public static void Teleportare (int oras1, int oras2)
+        public static void Teleportare(GraphNode<string> oras1, GraphNode<string> oras2)
         {
-            
+            Topologie[oras1.NodeNumber] = oras2;
+            Topologie[oras2.NodeNumber] = oras1;
         }
+
+        public static bool PoateFiSol(Graph<string> initial, Graph<string> dupaExplozie)
+        {
+            // Ex. legaturi[x] = 5 inseamna ca exista 5 orase din care pleaca x drumuri 
+            int[] legaturiInitial = new int[nrOrase - 1];
+            int[] legaturiFinal = new int[nrOrase - 1];
+            foreach (GraphNode<string> nod in initial.Nodes)
+            {
+                legaturiInitial[nod.NumberOfNeighbors] = legaturiInitial[nod.NumberOfNeighbors] + 1;
+            }
+            foreach (GraphNode<string> nod in dupaExplozie.Nodes)
+            {
+                legaturiFinal[nod.NumberOfNeighbors] = legaturiFinal[nod.NumberOfNeighbors] + 1;
+            }
+            return legaturiInitial.SequenceEqual(legaturiFinal);
+        }
+
+        public static bool Algoritm() { }
     }
 }

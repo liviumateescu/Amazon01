@@ -18,7 +18,7 @@ namespace Cheop.Models
         }
 
         private NodeList<T> nodeSet;  // ??????????????????????????????????????
-        private NodeList<T> nodesPosition;
+        //private NodeList<T> nodesPosition;
         private int edgeCount = 0;
 
         public Graph() : this(null) { }
@@ -93,13 +93,13 @@ namespace Cheop.Models
             }
         }
 
-        public NodeList<T> NodesPosition
+        /*public NodeList<T> NodesPosition
         {
             get
             {
                 return nodesPosition;
             }
-        }
+        }*/
 
         public int Count
         {

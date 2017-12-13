@@ -14,7 +14,6 @@ namespace Cheop.Models
 
         public int NumberOfNeighbors => Neighbors.Count;
 
-
         new public NodeList<T> Neighbors
         {
             get
