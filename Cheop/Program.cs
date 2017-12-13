@@ -101,7 +101,7 @@ namespace Cheop
             // >>>>>>>>>>>>>>>>>>>>>>>>>> ADAUGARE DRUMURI NOI <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             //
             bool SOLUTIE = false;
-            while (!SOLUTIE)
+            /*while (!SOLUTIE)
             {
                 int NrDrumuriTotal = nrOrase * (nrOrase - 1) / 2;
                 int NrDrumuriInitiale = PlanetaInitiala.EdgeCount;
@@ -121,14 +121,51 @@ namespace Cheop
                     if (PoateFiSolutie) //conditia 2 indeplinita (orase cu numar identic de drumuri)
                     {
                         SOLUTIE = Algoritm();
-                    } 
+                    }
                 }
                 else
                 {
-                    ModificaUnDrumDinCeleAdaugate;
+                    //ModificaUnDrumDinCeleAdaugate;
+                }
+            }*/
+            //
+            // parcurgere si adaugare laturi
+            //
+            RoadList<string> DrumuriDeAdaugat = new RoadList<string>(); //va contine toate drumurile suplimentare care pot fi adaugate, prin asta voi merge cu foreach
+            Dictionary<Road<string>, bool> DrumVerificat = new Dictionary<Road<string>, bool>(); //dictionar in care tin seama daca am suplimentat sau nu un drum
+            Queue<Road<string>> DrumQueue = new Queue<Road<string>>();
+            foreach (GraphNode<string> nod in PlanetaInitiala.Nodes) // parcurge fiecare nod
+            {
+                // creaza laturile posibile a fi adaugate pentru fiecare nod
+                //RoadList<string> DrumuriDeAdaugat = new RoadList<string>();
+                NodeList<string> diferenta = GetDiff(PlanetaInitiala.Nodes, nod.Neighbors);
+                diferenta.Remove(nod);
+                foreach (GraphNode<string> nodNou in diferenta)
+                {
+                    DrumuriDeAdaugat.Add(new Road<string>(nod, nodNou));
                 }
             }
+            Console.WriteLine(DrumuriDeAdaugat.ToString());
 
+            foreach (Road<string> road in DrumuriDeAdaugat)
+            {
+                if (!DrumVerificat.ContainsKey(road))
+                {
+                    DrumQueue.Enqueue(road);
+                    while (DrumQueue.Count != 0)
+                    {
+                        Road<string> drumDeLucru = DrumQueue.Dequeue();
+                        DrumVerificat[drumDeLucru] = true;
+                        // TODO :   1. adauga drumdelucru la drumurile din planetainitiala
+                        //          2. verifica daca noua soultie are sens - PoateFiSol - intrun while: while not poatefisol.....
+
+                        foreach (Road<string> item in collection)
+                        {
+
+                        }
+                    }
+                }
+            }
 
 
 
@@ -277,13 +314,32 @@ namespace Cheop
             return legaturiInitial.SequenceEqual(legaturiFinal);
         }
 
-        public static bool Algoritm() {
+        public static bool Algoritm()
+        {
             throw new NotImplementedException();
         }
 
         private static void AdaugaOrase()
         {
             throw new NotImplementedException();
+        }
+
+        public static NodeList<string> GetDiff(NodeList<string> first, NodeList<string> second)
+        {
+            NodeList<string> diferenta = new NodeList<string>();
+            foreach (GraphNode<string> nod in first)
+            {
+                if (!second.Contains(nod))
+                {
+                    diferenta.Add(nod);
+                }
+            }
+            return diferenta;
+        }
+
+        public Road<string> GetInverseRoad(Road<string> undrum)
+        {
+            return new Road<string>(undrum.road.Value, undrum.road.Key);
         }
     }
 }

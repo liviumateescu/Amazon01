@@ -28,5 +28,14 @@ namespace Cheop.Models
             return null;
         }
 
+        public override string ToString()
+        {
+            string s="NodeList: ";
+            foreach (Node<T> nod in base.Items)
+            {
+                s = s + nod.ToString() + " -> ";
+            }
+            return s+"\n";
+        }
     }
 }
