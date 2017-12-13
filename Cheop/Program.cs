@@ -109,6 +109,11 @@ namespace Cheop
                 bool AdaugDrumuriInitiale = NrDrumuriInitiale < NrDrumuriFinale;
                 bool AdaugOrase = NrDrumuriInitiale > NrDrumuriFinale;
 
+                if (AdaugOrase)
+                {
+                    AdaugaOrase();
+                }
+
                 if (NrDrumuriInitiale == NrDrumuriFinale) // conditia 1 indeplinita (acelasi nr de drumuri)
                 {
                     bool PoateFiSolutie = PoateFiSol(PlanetaInitiala, PlanetaDupaExplozie);
@@ -117,7 +122,7 @@ namespace Cheop
                     {
                         SOLUTIE = Algoritm();
                     } 
-                }//else - genereaza alt graf
+                }
                 else
                 {
                     ModificaUnDrumDinCeleAdaugate;
@@ -163,6 +168,7 @@ namespace Cheop
 
             Console.ReadKey();
         }
+
 
         public static List<drum> GetInitialRoads()
         {
@@ -271,6 +277,13 @@ namespace Cheop
             return legaturiInitial.SequenceEqual(legaturiFinal);
         }
 
-        public static bool Algoritm() { }
+        public static bool Algoritm() {
+            throw new NotImplementedException();
+        }
+
+        private static void AdaugaOrase()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
