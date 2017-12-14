@@ -165,7 +165,7 @@ namespace Cheop
             Console.WriteLine(DrumuriDeAdaugat.ToString());
             // creaza toate combinatiile posibile de drumuri care pot fi adaugate
             CombinatiiDrumuriDeAdaugat = GetCombinations(DrumuriDeAdaugat, nrOfRoadsToBeAdded);
-    
+
             //PlanetaInitialaDeLucru.PrintGraph();
 
             // in acest punct am :
@@ -203,6 +203,12 @@ namespace Cheop
                 //PlanetaInitialaDeLucru.PrintGraph();
             }
 
+            if ((GasitSolutie) & (pasCurent < CombinatiiDrumuriDeAdaugat.Count)) //a fost gasita o solutie -> scrie in fisier
+            {
+                Console.WriteLine("Solutia este:");
+                Console.WriteLine("");
+                Console.WriteLine(CombinatiiDrumuriDeAdaugat[pasCurent]);
+            }
 
             //
             // >>>>>>>>>>>>>>>>>>>>>>>>>> PARCURGERE GRAPH <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -417,11 +423,11 @@ namespace Cheop
 
             foreach (GraphNode<string> nod in plInainteDeExplozie.Nodes)
             {
-                int from = nod.NodeNumber-1;
+                int from = nod.NodeNumber - 1;
                 foreach (GraphNode<string> vecin in nod.Neighbors)
                 {
-                    int to = vecin.NodeNumber-1;
-                    mInitial[from,to] = 1;
+                    int to = vecin.NodeNumber - 1;
+                    mInitial[from, to] = 1;
                 }
             }
             for (int i = 0; i < numar_orase; i++)
