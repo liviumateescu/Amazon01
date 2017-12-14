@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 
 namespace Cheop.Models
 {
+    //[Serializable]
     public class NodeList<T>:Collection<Node<T>>
     {
         public NodeList() : base() { }
@@ -37,5 +38,6 @@ namespace Cheop.Models
             }
             return s+"\n";
         }
+
     }
 }

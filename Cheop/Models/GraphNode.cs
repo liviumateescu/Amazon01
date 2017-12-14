@@ -4,6 +4,7 @@ using System.Text;
 
 namespace Cheop.Models
 {
+    //[Serializable]
     public class GraphNode<T> : Node<T>
     {
         private List<int> costs;
@@ -32,6 +33,11 @@ namespace Cheop.Models
                     costs = new List<int>();
                 return costs;
             }
+        }
+
+        public void SetNeighbors(NodeList<string> newNeighbors)
+        {
+
         }
     }
 }

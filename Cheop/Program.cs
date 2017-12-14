@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Cheop.Models;
 using Cheop.Util;
 using Cheop.Exceptions;
+using Cheop.Combinatorics;
 
 namespace Cheop
 {
@@ -48,7 +49,7 @@ namespace Cheop
                 adjMatrix[d.oras1 - 1, d.oras2 - 1] = 1;
                 adjMatrix[d.oras2 - 1, d.oras1 - 1] = 1;
             }
-            PrintMatrix(adjMatrix);
+            //PrintMatrix(adjMatrix);
 
             Graph<string> PlanetaInitiala = new Graph<string>();
             //adauga planetele in obiectul Graph
@@ -64,7 +65,8 @@ namespace Cheop
                 GraphNode<string> to = (GraphNode<string>)PlanetaInitiala.Nodes.FindByValue(d.oras2.ToString());
                 PlanetaInitiala.AddUndirectedEdge(from, to);
             }
-
+            PlanetaInitiala.PrintGraph();
+            //_________________ Avem PlanetaInitiala _______________________
 
             //
             // >>>>>>>>>>>>>>>>>>>>>>>>>> DUPA EXPLOZIE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -81,8 +83,8 @@ namespace Cheop
                     }
                 }
             }
-            Console.WriteLine("++++++++++++++++++++++++++++++++++++");
-            PrintMatrix(NewAdjMatrix);
+            //Console.WriteLine("++++++++++++++++++++++++++++++++++++");
+            //PrintMatrix(NewAdjMatrix);
 
             //Adauga orasele initiale
             Graph<string> PlanetaDupaExplozie = new Graph<string>();
@@ -91,16 +93,30 @@ namespace Cheop
                 PlanetaDupaExplozie.AddNode((i + 1).ToString());
             }
             //Adauga drumurile dupa explozie
-            Console.WriteLine("Dupa explozie au fost adaugate {0} drumuri.", GraphFromMatrix(out PlanetaDupaExplozie, NewAdjMatrix));
+            Console.WriteLine("Dupa explozie au fost adaugate {0} drumuri.", GraphFromMatrix(out PlanetaDupaExplozie, NewAdjMatrix)); //au fost adaugate drumurile in Graf
+            PlanetaDupaExplozie.PrintGraph();
+            //_________________ Avem PlanetaDupaExplozie _______________________
+
+
             Console.WriteLine("Inaine de explozie au fost {0} drumuri.", PlanetaInitiala.EdgeCount);
             Console.WriteLine("Dupa explozie sunt {0} drumuri.", PlanetaDupaExplozie.EdgeCount);
             Console.WriteLine("Numar corect de drumuri? -> {0}", (PlanetaInitiala.EdgeCount + PlanetaDupaExplozie.EdgeCount) == (nrOrase * (nrOrase - 1) / 2));
-            bool AddNewRoads = !(PlanetaInitiala.EdgeCount == PlanetaDupaExplozie.EdgeCount);
+            bool AddNewRoads = PlanetaInitiala.EdgeCount < PlanetaDupaExplozie.EdgeCount;
             Console.WriteLine("Mai este nevoie de noi drumuri? -> {0}", AddNewRoads);
+            int nrOfRoadsToBeAdded = 0;
+            if (AddNewRoads)
+            {
+                nrOfRoadsToBeAdded = ((nrOrase * (nrOrase - 1) / 2 / 2) - PlanetaInitiala.EdgeCount);
+            }
+            Console.WriteLine("Mai este nevoie de {0} noi drumuri.", nrOfRoadsToBeAdded);
             //
             // >>>>>>>>>>>>>>>>>>>>>>>>>> ADAUGARE DRUMURI NOI <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             //
-            bool SOLUTIE = false;
+
+            // Verifica daca trebuie adaugate noi noduri
+
+
+            //bool SOLUTIE = false;
             /*while (!SOLUTIE)
             {
                 int NrDrumuriTotal = nrOrase * (nrOrase - 1) / 2;
@@ -131,13 +147,14 @@ namespace Cheop
             //
             // parcurgere si adaugare laturi
             //
+            // aici trebuie sa pun un if(AddNewRoads)!!!!!!!!!!!!!
             RoadList<string> DrumuriDeAdaugat = new RoadList<string>(); //va contine toate drumurile suplimentare care pot fi adaugate, prin asta voi merge cu foreach
+            List<RoadList<string>> CombinatiiDrumuriDeAdaugat = new List<RoadList<string>>();
             Dictionary<Road<string>, bool> DrumVerificat = new Dictionary<Road<string>, bool>(); //dictionar in care tin seama daca am suplimentat sau nu un drum
             Queue<Road<string>> DrumQueue = new Queue<Road<string>>();
             foreach (GraphNode<string> nod in PlanetaInitiala.Nodes) // parcurge fiecare nod
             {
                 // creaza laturile posibile a fi adaugate pentru fiecare nod
-                //RoadList<string> DrumuriDeAdaugat = new RoadList<string>();
                 NodeList<string> diferenta = GetDiff(PlanetaInitiala.Nodes, nod.Neighbors);
                 diferenta.Remove(nod);
                 foreach (GraphNode<string> nodNou in diferenta)
@@ -146,33 +163,51 @@ namespace Cheop
                 }
             }
             Console.WriteLine(DrumuriDeAdaugat.ToString());
+            // creaza toate combinatiile posibile de drumuri care pot fi adaugate
+            CombinatiiDrumuriDeAdaugat = GetCombinations(DrumuriDeAdaugat, nrOfRoadsToBeAdded);
+    
+            //PlanetaInitialaDeLucru.PrintGraph();
 
-            foreach (Road<string> road in DrumuriDeAdaugat)
+            // in acest punct am :
+            //          - o planeta initiala pentru care stiu cate drumuri trebuie sa adaug ca sa o fac solutie posibila 
+            //          - toate combinatiile posibile de drumuri care pot fi adaugate
+            // mai departe:
+            //          - incep sa adaug perechi de drumuri in planeta initiala
+            //          - recalculez planeta dupa explozie
+            //          - verific daca cele doua topologii pot fi rezolvate
+            bool GasitSolutie = false;
+            int pasCurent = 0;
+            while ((!GasitSolutie) & (pasCurent < CombinatiiDrumuriDeAdaugat.Count))
             {
-                if (!DrumVerificat.ContainsKey(road))
+                Graph<string> PlanetaInitiala_DeLucru = new Graph<string>(PlanetaInitiala.Nodes); // copie de lucru
+                //PlanetaInitiala_DeLucru.PrintGraph();
+                Graph<string> PlanetaDupaExplozie_DeLucru = CreazaPlanetaDupaExplozie(PlanetaInitiala); //creeaza noua planeta dupa explozie
+                //PlanetaDupaExplozie_DeLucru.PrintGraph();
+                //Console.WriteLine(CombinatiiDrumuriDeAdaugat[pasCurent].ToString());
+                PlanetaInitiala_DeLucru.AddUndirectedEdge(CombinatiiDrumuriDeAdaugat[pasCurent]); // adauga drumuri noi in planeta initiala
+                Console.WriteLine("Planeta initala de lucru dupa adaugare noi drumuri:");
+                PlanetaInitiala_DeLucru.PrintGraph();
+                PlanetaDupaExplozie_DeLucru = CreazaPlanetaDupaExplozie(PlanetaInitiala_DeLucru); // creeaza planeta dupa explozie din graful modificat de dinainte de exlozie
+                Console.WriteLine("Planeta dupa explozie de lucru dupa adaugare noi drumuri:");
+                PlanetaDupaExplozie_DeLucru.PrintGraph();
+
+                if (PoateFiSol(PlanetaInitiala_DeLucru, PlanetaDupaExplozie_DeLucru))
                 {
-                    DrumQueue.Enqueue(road);
-                    while (DrumQueue.Count != 0)
-                    {
-                        Road<string> drumDeLucru = DrumQueue.Dequeue();
-                        DrumVerificat[drumDeLucru] = true;
-                        // TODO :   1. adauga drumdelucru la drumurile din planetainitiala
-                        //          2. verifica daca noua soultie are sens - PoateFiSol - intrun while: while not poatefisol.....
-
-                        foreach (Road<string> item in collection)
-                        {
-
-                        }
-                    }
+                    GasitSolutie = true;
+                    Console.WriteLine("-----gasita la pas {0}", pasCurent);
                 }
+                else
+                {
+                    pasCurent++;
+                }
+                //PlanetaInitialaDeLucru.PrintGraph();
             }
-
 
 
             //
             // >>>>>>>>>>>>>>>>>>>>>>>>>> PARCURGERE GRAPH <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             //
-            Dictionary<GraphNode<string>, bool> visited = new Dictionary<GraphNode<string>, bool>();
+            /*Dictionary<GraphNode<string>, bool> visited = new Dictionary<GraphNode<string>, bool>();
             Queue<GraphNode<string>> worklist = new Queue<GraphNode<string>>();
 
             foreach (GraphNode<string> nod in PlanetaInitiala.Nodes) // doar pentru a sari la grafuri partiale
@@ -196,11 +231,11 @@ namespace Cheop
                 }
             }
 
-
             foreach (KeyValuePair<GraphNode<string>, bool> entry in visited)
             {
                 Console.WriteLine("{0} -> {1}", entry.Key.Value, entry.Value);
             }
+            */
 
 
             Console.ReadKey();
@@ -324,6 +359,7 @@ namespace Cheop
             throw new NotImplementedException();
         }
 
+        // diferenta dintre doua NodeList.
         public static NodeList<string> GetDiff(NodeList<string> first, NodeList<string> second)
         {
             NodeList<string> diferenta = new NodeList<string>();
@@ -337,9 +373,118 @@ namespace Cheop
             return diferenta;
         }
 
-        public Road<string> GetInverseRoad(Road<string> undrum)
+        public static Road<string> GetInverseRoad(Road<string> undrum)
         {
             return new Road<string>(undrum.road.Value, undrum.road.Key);
+        }
+
+        public static List<RoadList<string>> GetCombinations(RoadList<string> toateDrumurile, int combinationLength)
+        {
+            List<RoadList<string>> combinatii = new List<RoadList<string>>();
+            Combinations<Road<string>> combinations = new Combinations<Road<string>>(toateDrumurile, combinationLength);
+
+            //string cformat = "Combinations of {{A B C D}} choose 2: size = {0}";
+            //Console.WriteLine(String.Format(cformat, combinations.Count));
+
+            foreach (IList<Road<string>> c in combinations)
+            {
+                RoadList<string> listadrumuri = new RoadList<string>();
+                foreach (Road<string> road in c)
+                {
+                    listadrumuri.Add(road);
+                }
+                combinatii.Add(listadrumuri);
+                //Console.WriteLine(String.Format("{{{0} {1}}}", c[0], c[1]));
+            }
+            /*foreach (RoadList<string> c in combinatii)
+            {
+                foreach (var d in c)
+                {
+                    Console.WriteLine(d);
+                }
+                Console.WriteLine("_______________________________");
+            }*/
+
+            return combinatii;
+        }
+
+        public static Graph<string> CreazaPlanetaDupaExplozie(Graph<string> plInainteDeExplozie)
+        {
+            Graph<string> plDupaExplozie = new Graph<string>();
+            int numar_orase = plInainteDeExplozie.Count;
+            int[,] mInitial = new int[numar_orase, numar_orase];
+            int[,] mFinal = new int[numar_orase, numar_orase];
+
+            foreach (GraphNode<string> nod in plInainteDeExplozie.Nodes)
+            {
+                int from = nod.NodeNumber-1;
+                foreach (GraphNode<string> vecin in nod.Neighbors)
+                {
+                    int to = vecin.NodeNumber-1;
+                    mInitial[from,to] = 1;
+                }
+            }
+            for (int i = 0; i < numar_orase; i++)
+            {
+                for (int j = 0; j < numar_orase; j++)
+                {
+                    if ((mInitial[i, j] == 0) & (i != j))
+                    {
+                        mFinal[i, j] = 1;
+                    }
+                }
+            }
+
+            //PrintMatrix(mInitial);
+            //PrintMatrix(mFinal);
+
+            for (int i = 0; i < plInainteDeExplozie.Count; i++)
+            {
+                plDupaExplozie.AddNode((i + 1).ToString());
+            }
+            //Console.WriteLine("Dupa explozie au fost adaugate {0} drumuri.", GraphFromMatrix(out plDupaExplozie, mFinal)); //au fost adaugate drumurile in Graf
+            GraphFromMatrix(out plDupaExplozie, mFinal);
+
+            //plDupaExplozie.PrintGraph();
+
+
+
+            //Graph<string> plDupaExplozie = new Graph<string>(plInainteDeExplozie.Nodes);
+            //Console.WriteLine("********************");
+            //planetaDupaExplozie.PrintGraph();
+            //Console.WriteLine("********************");
+            /*Graph<string> planetaDupaExplozie = new Graph<string>();
+            for (int i = 0; i < nrOrase; i++)
+            {
+                planetaDupaExplozie.AddNode((i + 1).ToString());
+            }*/
+
+            /*Graph<string> plDupaExplozie = new Graph<string>();
+            for (int i = 0; i < nrOrase; i++)
+            {
+                plDupaExplozie.AddNode((i + 1).ToString());
+            }
+
+            foreach (GraphNode<string> nod in plInainteDeExplozie.Nodes)
+            {
+                NodeList<string> diferenteVecini = GetDiff(plInainteDeExplozie.Nodes, nod.Neighbors); // lista cu vecinii ficarui nod catre care trebuie sa existe drumuri
+                bool remok = diferenteVecini.Remove(nod);
+                foreach (GraphNode<string> vecin in diferenteVecini)
+                {
+                    plDupaExplozie.AddUndirectedEdge(nod, vecin);
+                }
+
+                //diferenteVecini.Remove(nod);
+                //foreach (GraphNode<string> vecin in nod.Neighbors)
+                //{
+                //nod.ResetNeighbors(diferenteVecini);
+                //}
+            }
+            //Console.WriteLine("???????????????????????????");
+            //plDupaExplozie.PrintGraph();
+            //Console.WriteLine("??????????????????????????");
+            */
+            return plDupaExplozie;
         }
     }
 }

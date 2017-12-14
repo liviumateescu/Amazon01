@@ -4,6 +4,7 @@ using System.Text;
 
 namespace Cheop.Models
 {
+    //[Serializable]
     public class Node<T>
     {
         private T data;
@@ -41,6 +42,12 @@ namespace Cheop.Models
             {
                 neighbors = value;
             }
+        }
+
+        public void ResetNeighbors(NodeList<T> newNeighbors)
+        {
+            this.neighbors = null;
+            this.neighbors = newNeighbors;
         }
 
     }

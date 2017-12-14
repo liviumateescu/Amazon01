@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 
 namespace Cheop.Models
 {
+    //[Serializable]
     public class GraphNodeList<T> : Collection<GraphNode<T>>
     {
         public GraphNodeList() : base() { }

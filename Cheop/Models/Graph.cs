@@ -5,6 +5,7 @@ using System.Text;
 
 namespace Cheop.Models
 {
+    //[Serializable]
     public class Graph<T> : IEnumerable<T>
     {
         public IEnumerator<T> GetEnumerator()
@@ -60,6 +61,19 @@ namespace Cheop.Models
             edgeCount++;
         }
 
+        public void AddUndirectedEdge(Road<T> drum)
+        {
+            AddUndirectedEdge(drum.road.Key, drum.road.Value, 0);
+        }
+
+        public void AddUndirectedEdge(RoadList<T> listaDeDrumuri)
+        {
+            foreach (Road<T> drum in listaDeDrumuri)
+            {
+                AddUndirectedEdge(drum);
+            }
+        }
+
         public bool Contains(T value)
         {
             return nodeSet.FindByValue(value) != null;
@@ -106,7 +120,19 @@ namespace Cheop.Models
             get { return nodeSet.Count; }
         }
 
-        public int EdgeCount => edgeCount;
+        public int EdgeCount
+        {
+            get
+            {
+                int sum = 0;
+                foreach (GraphNode<T> nod in this.nodeSet)
+                {
+                    sum = sum + nod.NumberOfNeighbors;
+                }
+                return sum/2;
+
+            }
+        }
         
         public bool Teleport(T oras1, T oras2)
         {
@@ -114,5 +140,16 @@ namespace Cheop.Models
             return true;
         }
 
+        public void PrintGraph()
+        {
+            Console.WriteLine("-------- PLANETA --------");
+            Console.WriteLine("Numarul de orase = {0}.", this.Count);
+            Console.WriteLine("Planeta are {0} drumuri dintr-un total de {1} posibile.", this.EdgeCount, this.Count*(this.Count-1) /2);
+            foreach (GraphNode<T> nod in this.nodeSet)
+            {
+                Console.WriteLine("Orasul {0} are {1} vecini.", nod.Value, nod.NumberOfNeighbors);
+            }
+            Console.WriteLine("-------------------------");
+        }
     }
 }
