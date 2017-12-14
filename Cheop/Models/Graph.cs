@@ -151,5 +151,14 @@ namespace Cheop.Models
             }
             Console.WriteLine("-------------------------");
         }
+
+        public void RemoveEdge(Road<T> road)
+        {
+            nodeSet.FindByValue((T)road.road.Key);
+            foreach (Node<T> nod in this.nodeSet)
+            {
+                nod.Neighbors.Remove(road.road.Key);
+            }
+        }
     }
 }

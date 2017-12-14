@@ -15,6 +15,8 @@ namespace Cheop
         private static List<drum> _drumuriInitiale { get; set; }
         public static int nrOrase;
         public static int nrDrumuri;
+        public static int nrOraseDinFisier;
+        public static int nrDrumuriDinFisier;
         public static Dictionary<int, GraphNode<string>> Topologie;
 
         static void Main(string[] args)
@@ -26,13 +28,12 @@ namespace Cheop
             {
                 _drumuriInitiale = GetInitialRoads();
 
-                int maxDrumuri = nrOrase * (nrOrase - 1) / 2;
+                int maximumDrumuri = nrOrase * (nrOrase - 1) / 2;
 
                 Console.WriteLine("Unic? {0}", Utilities.AllUnique(_drumuriInitiale));
                 Console.WriteLine("Numarul de drumuri existente = {0}", nrDrumuri);
-                Console.WriteLine("Numarul maxim de drumuri posibile = {0}", maxDrumuri);
-                Console.WriteLine("Numarul de drumuri posibile = {0}", maxDrumuri);
-
+                Console.WriteLine("Numarul maxim de drumuri posibile = {0}", maximumDrumuri);
+                Console.WriteLine("Numarul de drumuri posibile = {0}", maximumDrumuri);
             }
             catch (Exception e)
             {
@@ -66,7 +67,7 @@ namespace Cheop
                 PlanetaInitiala.AddUndirectedEdge(from, to);
             }
             PlanetaInitiala.PrintGraph();
-            //_________________ Avem PlanetaInitiala _______________________
+            //_________________________________ Avem PlanetaInitiala __________________________________________
 
             //
             // >>>>>>>>>>>>>>>>>>>>>>>>>> DUPA EXPLOZIE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -87,170 +88,235 @@ namespace Cheop
             //PrintMatrix(NewAdjMatrix);
 
             //Adauga orasele initiale
-            Graph<string> PlanetaDupaExplozie = new Graph<string>();
+            Graph<string> PlanetaDupaExplozie_DinFisier = new Graph<string>();
             for (int i = 0; i < PlanetaInitiala.Count; i++)
             {
-                PlanetaDupaExplozie.AddNode((i + 1).ToString());
+                PlanetaDupaExplozie_DinFisier.AddNode((i + 1).ToString());
             }
             //Adauga drumurile dupa explozie
-            Console.WriteLine("Dupa explozie au fost adaugate {0} drumuri.", GraphFromMatrix(out PlanetaDupaExplozie, NewAdjMatrix)); //au fost adaugate drumurile in Graf
-            PlanetaDupaExplozie.PrintGraph();
-            //_________________ Avem PlanetaDupaExplozie _______________________
+            //Console.WriteLine("Dupa explozie au fost adaugate {0} drumuri.", GraphFromMatrix(out PlanetaDupaExplozie, NewAdjMatrix)); //au fost adaugate drumurile in Graf
+            GraphFromMatrix(out PlanetaDupaExplozie_DinFisier, NewAdjMatrix);
+            PlanetaDupaExplozie_DinFisier.PrintGraph();
+            //____________________________________ Avem PlanetaDupaExplozie ______________________________________
 
+            nrOraseDinFisier = nrOrase;
+            nrDrumuriDinFisier = nrDrumuri;
 
-            Console.WriteLine("Inaine de explozie au fost {0} drumuri.", PlanetaInitiala.EdgeCount);
-            Console.WriteLine("Dupa explozie sunt {0} drumuri.", PlanetaDupaExplozie.EdgeCount);
-            Console.WriteLine("Numar corect de drumuri? -> {0}", (PlanetaInitiala.EdgeCount + PlanetaDupaExplozie.EdgeCount) == (nrOrase * (nrOrase - 1) / 2));
-            bool AddNewRoads = PlanetaInitiala.EdgeCount < PlanetaDupaExplozie.EdgeCount;
-            Console.WriteLine("Mai este nevoie de noi drumuri? -> {0}", AddNewRoads);
-            int nrOfRoadsToBeAdded = 0;
-            if (AddNewRoads)
+            bool EXISTA_SOLUTIE = false;
+            bool ADAUGA_ORAS_PUNCT_MORT = false;
+
+            int numardewhileuri = 0;
+            while (!EXISTA_SOLUTIE)
             {
-                nrOfRoadsToBeAdded = ((nrOrase * (nrOrase - 1) / 2 / 2) - PlanetaInitiala.EdgeCount);
-            }
-            Console.WriteLine("Mai este nevoie de {0} noi drumuri.", nrOfRoadsToBeAdded);
-            //
-            // >>>>>>>>>>>>>>>>>>>>>>>>>> ADAUGARE DRUMURI NOI <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            //
+                //
+                // >>>>>>>>>>>>>>>>>>>>>>>>>> VERIFICA DACA MAI TREBUIE ADAUGATE ORASE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                //
+                int NumarInitialDeOrase = nrOrase;
+                int NumarNouDeOrase = nrOrase;
 
-            // Verifica daca trebuie adaugate noi noduri
+                int maxDrumuri = nrOrase * (nrOrase - 1) / 2; // cand adaug un oras se schimba numarul maxim de drumuri posibile
 
+                int AddNewCities_01 = maxDrumuri % 2;
+                double NumarDrumuriDeAdaugat = maxDrumuri / 2 - nrDrumuri; //nrDrumuri ramane acelasi citit din fisier, nu adaug niciun drum, doar orase
 
-            //bool SOLUTIE = false;
-            /*while (!SOLUTIE)
-            {
-                int NrDrumuriTotal = nrOrase * (nrOrase - 1) / 2;
-                int NrDrumuriInitiale = PlanetaInitiala.EdgeCount;
-                int NrDrumuriFinale = PlanetaDupaExplozie.EdgeCount;
-                bool AdaugDrumuriInitiale = NrDrumuriInitiale < NrDrumuriFinale;
-                bool AdaugOrase = NrDrumuriInitiale > NrDrumuriFinale;
+                // conditiile in care se adauga un oras nou: daca in declaratie sunt TRUE => se adauga un oras nou
+                // se adauga un oras nou cand CEL PUTIN UNA din conditii este FALSE
+                bool conditia1 = (AddNewCities_01 == 0); // daca restul e zero = se pot genera atatea drumuri cate au fost, daca restul e 1, numarul total de drumuri e impar si trebuie sa adaug oras
+                bool conditia2 = (NumarDrumuriDeAdaugat >= 0); // daca NumarDrumuriDeAdaugat >= 0 inseamna ca dupa explozie raman destule drumuri ca sa pot reconstitui graful initial
+                bool conditia3 = (NumarDrumuriDeAdaugat == Math.Floor(NumarDrumuriDeAdaugat)); // numarul de drumuri care trebuie adaugate trebuie sa fie intreg, duh!
+                bool conditia4 = ADAUGA_ORAS_PUNCT_MORT;
 
-                if (AdaugOrase)
+                while ((!conditia1) | (!conditia2) | (!conditia3) | (ADAUGA_ORAS_PUNCT_MORT))
                 {
-                    AdaugaOrase();
-                }
+                    NumarNouDeOrase++;
+                    PlanetaInitiala.AddNode(NumarNouDeOrase.ToString());
 
-                if (NrDrumuriInitiale == NrDrumuriFinale) // conditia 1 indeplinita (acelasi nr de drumuri)
-                {
-                    bool PoateFiSolutie = PoateFiSol(PlanetaInitiala, PlanetaDupaExplozie);
-                    Console.WriteLine("Poate fi solutie? -> {0}", PoateFiSolutie);
-                    if (PoateFiSolutie) //conditia 2 indeplinita (orase cu numar identic de drumuri)
+                    maxDrumuri = NumarNouDeOrase * (NumarNouDeOrase - 1) / 2;
+                    AddNewCities_01 = maxDrumuri % 2;
+                    if (AddNewCities_01 == 0)
                     {
-                        SOLUTIE = Algoritm();
+                        conditia1 = true;
+                    }
+                    else
+                    {
+                        conditia1 = false;
+                    }
+
+                    NumarDrumuriDeAdaugat = maxDrumuri / 2 - nrDrumuri;
+                    if (NumarDrumuriDeAdaugat >= 0)
+                    {
+                        conditia2 = true;
+                    }
+                    else
+                    {
+                        conditia2 = false;
+                    }
+
+
+                    if (NumarDrumuriDeAdaugat == Math.Floor(NumarDrumuriDeAdaugat))
+                    {
+                        conditia3 = true;
+                    }
+                    else
+                    {
+                        conditia3 = false;
+                    }
+
+                    if (ADAUGA_ORAS_PUNCT_MORT)
+                    {
+                        conditia4 = false;
+                        ADAUGA_ORAS_PUNCT_MORT = false;
                     }
                 }
-                else
-                {
-                    //ModificaUnDrumDinCeleAdaugate;
-                }
-            }*/
-            //
-            // parcurgere si adaugare laturi
-            //
-            // aici trebuie sa pun un if(AddNewRoads)!!!!!!!!!!!!!
-            RoadList<string> DrumuriDeAdaugat = new RoadList<string>(); //va contine toate drumurile suplimentare care pot fi adaugate, prin asta voi merge cu foreach
-            List<RoadList<string>> CombinatiiDrumuriDeAdaugat = new List<RoadList<string>>();
-            Dictionary<Road<string>, bool> DrumVerificat = new Dictionary<Road<string>, bool>(); //dictionar in care tin seama daca am suplimentat sau nu un drum
-            Queue<Road<string>> DrumQueue = new Queue<Road<string>>();
-            foreach (GraphNode<string> nod in PlanetaInitiala.Nodes) // parcurge fiecare nod
-            {
-                // creaza laturile posibile a fi adaugate pentru fiecare nod
-                NodeList<string> diferenta = GetDiff(PlanetaInitiala.Nodes, nod.Neighbors);
-                diferenta.Remove(nod);
-                foreach (GraphNode<string> nodNou in diferenta)
-                {
-                    DrumuriDeAdaugat.Add(new Road<string>(nod, nodNou));
-                }
-            }
-            Console.WriteLine(DrumuriDeAdaugat.ToString());
-            // creaza toate combinatiile posibile de drumuri care pot fi adaugate
-            CombinatiiDrumuriDeAdaugat = GetCombinations(DrumuriDeAdaugat, nrOfRoadsToBeAdded);
+                int NumarDeOraseAdaugate = NumarNouDeOrase - NumarInitialDeOrase;
+                nrOrase = NumarNouDeOrase;
 
-            //PlanetaInitialaDeLucru.PrintGraph();
+                Console.WriteLine("Au mai fost adaugate {0} orase.", NumarDeOraseAdaugate);
+                Console.WriteLine("Numar total de orase dupa adaugare de orase = {0}", nrOrase);
 
-            // in acest punct am :
-            //          - o planeta initiala pentru care stiu cate drumuri trebuie sa adaug ca sa o fac solutie posibila 
-            //          - toate combinatiile posibile de drumuri care pot fi adaugate
-            // mai departe:
-            //          - incep sa adaug perechi de drumuri in planeta initiala
-            //          - recalculez planeta dupa explozie
-            //          - verific daca cele doua topologii pot fi rezolvate
-            bool GasitSolutie = false;
-            int pasCurent = 0;
-            while ((!GasitSolutie) & (pasCurent < CombinatiiDrumuriDeAdaugat.Count))
-            {
-                Graph<string> PlanetaInitiala_DeLucru = new Graph<string>(PlanetaInitiala.Nodes); // copie de lucru
-                //PlanetaInitiala_DeLucru.PrintGraph();
-                Graph<string> PlanetaDupaExplozie_DeLucru = CreazaPlanetaDupaExplozie(PlanetaInitiala); //creeaza noua planeta dupa explozie
-                //PlanetaDupaExplozie_DeLucru.PrintGraph();
-                //Console.WriteLine(CombinatiiDrumuriDeAdaugat[pasCurent].ToString());
-                PlanetaInitiala_DeLucru.AddUndirectedEdge(CombinatiiDrumuriDeAdaugat[pasCurent]); // adauga drumuri noi in planeta initiala
-                Console.WriteLine("Planeta initala de lucru dupa adaugare noi drumuri:");
-                PlanetaInitiala_DeLucru.PrintGraph();
-                PlanetaDupaExplozie_DeLucru = CreazaPlanetaDupaExplozie(PlanetaInitiala_DeLucru); // creeaza planeta dupa explozie din graful modificat de dinainte de exlozie
-                Console.WriteLine("Planeta dupa explozie de lucru dupa adaugare noi drumuri:");
-                PlanetaDupaExplozie_DeLucru.PrintGraph();
-
-                if (PoateFiSol(PlanetaInitiala_DeLucru, PlanetaDupaExplozie_DeLucru))
+                Graph<string> PlanetaDupaExplozie = new Graph<string>();
+                if (NumarDeOraseAdaugate > 0) // Recalculeaza si PlanetaDupaExplozie daca s-au modificat numarul de orase
                 {
-                    GasitSolutie = true;
-                    Console.WriteLine("-----gasita la pas {0}", pasCurent);
+                    PlanetaDupaExplozie = CreazaPlanetaDupaExplozie(PlanetaInitiala);
                 }
                 else
                 {
-                    pasCurent++;
+                    PlanetaDupaExplozie = PlanetaDupaExplozie_DinFisier; // DUBIOUS ??????????? - copiere de referinta, eh plm
                 }
-                //PlanetaInitialaDeLucru.PrintGraph();
-            }
+                Console.WriteLine("++++++++++++++++++++++++++++++++++");
+                PlanetaInitiala.PrintGraph();
+                PlanetaDupaExplozie.PrintGraph();
+                Console.WriteLine("++++++++++++++++++++++++++++++++++");
+                //____________________________________ Avem numarul de orase corect ______________________________________
 
-            if ((GasitSolutie) & (pasCurent < CombinatiiDrumuriDeAdaugat.Count)) //a fost gasita o solutie -> scrie in fisier
-            {
-                Console.WriteLine("Solutia este:");
-                Console.WriteLine("");
-                Console.WriteLine(CombinatiiDrumuriDeAdaugat[pasCurent]);
-            }
 
-            //
-            // >>>>>>>>>>>>>>>>>>>>>>>>>> PARCURGERE GRAPH <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            //
-            /*Dictionary<GraphNode<string>, bool> visited = new Dictionary<GraphNode<string>, bool>();
-            Queue<GraphNode<string>> worklist = new Queue<GraphNode<string>>();
-
-            foreach (GraphNode<string> nod in PlanetaInitiala.Nodes) // doar pentru a sari la grafuri partiale
-            {
-                if (!visited.ContainsKey(nod)) //daca nu e vizitat incepe sa vizitezi altele din el
+                //
+                // >>>>>>>>>>>>>>>>>>>>>>>>>> VERIFICA DACA MAI TREBUIE ADAUGATE DRUMURI NOI <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                //
+                Console.WriteLine("Inaine de explozie au fost {0} drumuri.", PlanetaInitiala.EdgeCount);
+                Console.WriteLine("Dupa explozie sunt {0} drumuri.", PlanetaDupaExplozie.EdgeCount);
+                Console.WriteLine("Numar corect de drumuri? -> {0}", (PlanetaInitiala.EdgeCount + PlanetaDupaExplozie.EdgeCount) == (nrOrase * (nrOrase - 1) / 2));
+                bool AddNewRoads = PlanetaInitiala.EdgeCount < PlanetaDupaExplozie.EdgeCount;
+                Console.WriteLine("Mai este nevoie de noi drumuri? -> {0}", AddNewRoads);
+                int nrOfRoadsToBeAdded = 0;
+                if (AddNewRoads)
                 {
-                    worklist.Enqueue(nod);
-                    while (worklist.Count != 0)
+                    nrOfRoadsToBeAdded = ((nrOrase * (nrOrase - 1) / 2 / 2) - PlanetaInitiala.EdgeCount);
+                }
+                Console.WriteLine("Mai este nevoie de {0} noi drumuri.", nrOfRoadsToBeAdded);
+
+                //
+                // parcurgere si adaugare laturi
+                //
+
+                if (AddNewRoads)
+                {
+                    //
+                    // >>>>>>>>>>>>>>>>>>>>>>>>>> ADAUGARE DRUMURI NOI <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                    //
+                    RoadList<string> DrumuriDeAdaugat = new RoadList<string>(); //va contine toate drumurile suplimentare care pot fi adaugate, prin asta voi merge cu foreach
+                    List<RoadList<string>> CombinatiiDrumuriDeAdaugat = new List<RoadList<string>>();
+                    Dictionary<Road<string>, bool> DrumVerificat = new Dictionary<Road<string>, bool>(); //dictionar in care tin seama daca am suplimentat sau nu un drum
+                    Queue<Road<string>> DrumQueue = new Queue<Road<string>>();
+                    foreach (GraphNode<string> nod in PlanetaInitiala.Nodes) // parcurge fiecare nod
                     {
-                        GraphNode<string> node = worklist.Dequeue();
-                        visited[node] = true;
-                        foreach (GraphNode<string> neighbor in node.Neighbors)
+                        // creaza laturile posibile a fi adaugate pentru fiecare nod
+                        NodeList<string> diferenta = GetDiff(PlanetaInitiala.Nodes, nod.Neighbors);
+                        diferenta.Remove(nod);
+                        foreach (GraphNode<string> nodNou in diferenta)
                         {
-                            if (!visited.ContainsKey(neighbor))
-                            {
-                                visited.Add(neighbor, false);
-                                worklist.Enqueue(neighbor);
-                            }
+                            DrumuriDeAdaugat.Add(new Road<string>(nod, nodNou));
                         }
                     }
+                    Console.WriteLine(DrumuriDeAdaugat.ToString());
+                    // creaza toate combinatiile posibile de drumuri care pot fi adaugate
+                    CombinatiiDrumuriDeAdaugat = GetCombinations(DrumuriDeAdaugat, nrOfRoadsToBeAdded);
+
+                    //PlanetaInitialaDeLucru.PrintGraph();
+
+                    // in acest punct am :
+                    //          - o planeta initiala pentru care stiu cate drumuri trebuie sa adaug ca sa o fac solutie posibila 
+                    //          - toate combinatiile posibile de drumuri care pot fi adaugate
+                    // mai departe:
+                    //          - incep sa adaug perechi de drumuri in planeta initiala
+                    //          - recalculez planeta dupa explozie
+                    //          - verific daca cele doua topologii pot fi rezolvate
+                    bool GasitSolutie = false;
+                    int pasCurent = 0;
+                    while ((!GasitSolutie) & (pasCurent < CombinatiiDrumuriDeAdaugat.Count))
+                    {
+                        Graph<string> PlanetaInitiala_DeLucru = new Graph<string>(PlanetaInitiala.Nodes); // copie de lucru
+                                                                                                          //PlanetaInitiala_DeLucru.PrintGraph();
+                        Graph<string> PlanetaDupaExplozie_DeLucru = CreazaPlanetaDupaExplozie(PlanetaInitiala_DeLucru); //creeaza noua planeta dupa explozie
+                                                                                                                //PlanetaDupaExplozie_DeLucru.PrintGraph();
+                                                                                                                //Console.WriteLine(CombinatiiDrumuriDeAdaugat[pasCurent].ToString());
+                        PlanetaInitiala_DeLucru.AddUndirectedEdge(CombinatiiDrumuriDeAdaugat[pasCurent]); // adauga drumuri noi in planeta initiala
+                        Console.WriteLine("Se adauga urmatorul drum: {0}", CombinatiiDrumuriDeAdaugat[pasCurent].ToString());
+                        Console.WriteLine("Planeta initala de lucru dupa adaugare noi drumuri:");
+                        PlanetaInitiala_DeLucru.PrintGraph();
+                        PlanetaDupaExplozie_DeLucru = CreazaPlanetaDupaExplozie(PlanetaInitiala_DeLucru); // creeaza planeta dupa explozie din graful modificat de dinainte de exlozie
+                        Console.WriteLine("Planeta dupa explozie de lucru dupa adaugare noi drumuri:");
+                        PlanetaDupaExplozie_DeLucru.PrintGraph();
+
+                        if (PoateFiSol(PlanetaInitiala_DeLucru, PlanetaDupaExplozie_DeLucru))
+                        {
+                            GasitSolutie = true;
+                            Console.WriteLine("-----gasita la pas {0}", pasCurent);
+                            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> incepe sa schimbi nodurile intre ele <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                        }
+                        else
+                        {
+                            foreach (Road<string> road in CombinatiiDrumuriDeAdaugat[pasCurent])
+                            {
+                                PlanetaInitiala.Nodes
+                            }
+                            pasCurent++;
+                            Console.WriteLine("Graful propus nu poate fi solutie. Se trece la urmatorul pas si se adauga alt grup de drumuri.");
+                        }
+                        //PlanetaInitialaDeLucru.PrintGraph();
+                    }
+
+                    if ((GasitSolutie) & (pasCurent < CombinatiiDrumuriDeAdaugat.Count)) //a fost gasita o solutie -> scrie in fisier 
+                    {
+                        Console.WriteLine("Solutia este:");
+                        Console.WriteLine("");
+                        Console.WriteLine(CombinatiiDrumuriDeAdaugat[pasCurent]);
+                        EXISTA_SOLUTIE = true;
+                    }
+
+                    // daca nu a fost gasita o solutie dupa ce s-au adaugat toate combinatiile de drumuri posibilie
+                    // inseamna ca graful asta nu poate avea nicio solutie si atunci trebuie sa ma intorc sa adaug oras
+                    if ((!GasitSolutie) & (pasCurent >= CombinatiiDrumuriDeAdaugat.Count))
+                    {
+                        ADAUGA_ORAS_PUNCT_MORT = true; //adauga oras
+                    }
+
                 }
+                else
+                {
+                    Console.WriteLine("Nu mai trebuie sa adaug niciun drum nou dar trebuie sa verific daca chestia asta poate fi solutie.");
+                    bool PoateFiSolutie = PoateFiSol(PlanetaInitiala, PlanetaDupaExplozie);
+                    Console.WriteLine("Poate fi solutie? => {0}", PoateFiSolutie);
+                    if (PoateFiSolutie)
+                    {
+                        //a fost gasita o solutie -> scrie in fisier
+                        EXISTA_SOLUTIE = true;
+                    }
+                    else
+                    {
+                        // daca asta nu este solutie trebuie sa ma intorc sa adaug un oras
+                        ADAUGA_ORAS_PUNCT_MORT = true; // adauga oras
+                    }
+                }
+                numardewhileuri++;
             }
-
-            foreach (KeyValuePair<GraphNode<string>, bool> entry in visited)
-            {
-                Console.WriteLine("{0} -> {1}", entry.Key.Value, entry.Value);
-            }
-            */
-
 
             Console.ReadKey();
         }
 
-
         public static List<drum> GetInitialRoads()
         {
-            int[][] listaFisier = File.ReadAllLines("../Cheop/InputFiles/input.txt")
+            int[][] listaFisier = File.ReadAllLines("../Cheop/InputFiles/01_AMS.txt")
                     .Select(l => l.Split(' ').Select(i => int.Parse(i)).ToArray())
                     .ToArray();
 
@@ -342,8 +408,8 @@ namespace Cheop
         public static bool PoateFiSol(Graph<string> initial, Graph<string> dupaExplozie)
         {
             // Ex. legaturi[x] = 5 inseamna ca exista 5 orase din care pleaca x drumuri 
-            int[] legaturiInitial = new int[nrOrase - 1];
-            int[] legaturiFinal = new int[nrOrase - 1];
+            int[] legaturiInitial = new int[initial.Count];
+            int[] legaturiFinal = new int[dupaExplozie.Count];
             foreach (GraphNode<string> nod in initial.Nodes)
             {
                 legaturiInitial[nod.NumberOfNeighbors] = legaturiInitial[nod.NumberOfNeighbors] + 1;

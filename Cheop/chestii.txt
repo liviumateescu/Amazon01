@@ -1,0 +1,33 @@
+﻿
+                //
+                // >>>>>>>>>>>>>>>>>>>>>>>>>> PARCURGERE GRAPH <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                //
+                /*Dictionary<GraphNode<string>, bool> visited = new Dictionary<GraphNode<string>, bool>();
+                Queue<GraphNode<string>> worklist = new Queue<GraphNode<string>>();
+
+                foreach (GraphNode<string> nod in PlanetaInitiala.Nodes) // doar pentru a sari la grafuri partiale
+                {
+                    if (!visited.ContainsKey(nod)) //daca nu e vizitat incepe sa vizitezi altele din el
+                    {
+                        worklist.Enqueue(nod);
+                        while (worklist.Count != 0)
+                        {
+                            GraphNode<string> node = worklist.Dequeue();
+                            visited[node] = true;
+                            foreach (GraphNode<string> neighbor in node.Neighbors)
+                            {
+                                if (!visited.ContainsKey(neighbor))
+                                {
+                                    visited.Add(neighbor, false);
+                                    worklist.Enqueue(neighbor);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                foreach (KeyValuePair<GraphNode<string>, bool> entry in visited)
+                {
+                    Console.WriteLine("{0} -> {1}", entry.Key.Value, entry.Value);
+                }
+                */
